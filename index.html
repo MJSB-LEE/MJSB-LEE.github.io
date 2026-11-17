@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MJSB Portal</title>
+<style>
+  :root{--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#cbd5e1;--navy:#0f172a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--navy);color:#fff;padding:22px 16px;text-align:center}
+  header h1{margin:0;font-size:1.4rem;font-weight:800}
+  header p{margin:6px 0 0;color:#94a3b8;font-size:.9rem}
+  main{max-width:1080px;margin:40px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px}
+  a.card{display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 24px;text-decoration:none;color:inherit;border-top:5px solid var(--c);transition:transform .12s,box-shadow .12s}
+  .card.soon{display:block;background:#f8fafc;border:1px dashed var(--border);border-radius:14px;padding:26px 24px;border-top:5px solid var(--c);opacity:.75;cursor:default}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(15,23,42,.12)}
+  .icon{font-size:2.2rem}
+  .card h2{margin:10px 0 6px;font-size:1.15rem;color:var(--navy)}
+  .card p{margin:0 0 16px;color:var(--muted);font-size:.9rem;line-height:1.45}
+  .go{font-weight:700;color:var(--c);font-size:.9rem}
+  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 16px}
+</style>
+</head>
+<body>
+<header>
+  <h1>MJSB Portal</h1>
+  <p>Choose a module</p>
+</header>
+<main id="mods"></main>
+<footer>Each module has its own login.</footer>
+<script>
+/* ===== EDIT HERE to add / rename modules =====
+   link = the GitHub repo name (e.g. repo "po" → "po/")
+   soon:true = shows "Coming soon" and cannot be clicked (remove it when the module is ready) */
+const MODULES = [
+  { icon:'📊', name:'PO & GRN Audit', desc:'AutoCount PO vs GRN summary, PO outstanding, GRN listing and price check.', link:'po/',  color:'#0284c7' },
+  { icon:'🌴', name:'FFB',            desc:'FFB records and Site Clerk entry.',                                       link:'ffb/', color:'#15803d' },
+  { icon:'📦', name:'Store',          desc:'Store module.',                                                           link:'',     color:'#94a3b8', soon:true },
+];
+document.getElementById('mods').innerHTML = MODULES.map(m => m.soon
+  ? `<div class="card soon" style="--c:${m.color}"><div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Coming soon</span></div>`
+  : `<a class="card" href="${m.link}" style="--c:${m.color}">
+     <div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Open →</span>
+   </a>`).join('');
+</script>
+</body>
+</html>
