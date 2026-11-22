@@ -1,52 +1,73 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Estate · MJSB Portal</title>
-<style>
-  :root{--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#cbd5e1;--navy:#0f172a}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Inter,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-  header{background:var(--navy);color:#fff;padding:22px 16px;text-align:center;position:relative}
-  header h1{margin:0;font-size:1.4rem;font-weight:800}
-  header p{margin:6px 0 0;color:#94a3b8;font-size:.9rem}
-  .back{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:#fff;text-decoration:none;font-size:.9rem;font-weight:600;border:1px solid #334155;border-radius:8px;padding:8px 14px;background:#1e293b}
-  .back:hover{background:#334155}
-  main{max-width:1080px;margin:40px auto;padding:0 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,320px));gap:20px;justify-content:center}
-  a.card{display:block;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 24px;text-decoration:none;color:inherit;border-top:5px solid var(--c);transition:transform .12s,box-shadow .12s}
-  .card.soon{display:block;background:#f8fafc;border:1px dashed var(--border);border-radius:14px;padding:26px 24px;border-top:5px solid var(--c);opacity:.75;cursor:default}
-  a.card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(15,23,42,.12)}
-  .icon{font-size:2.2rem}
-  .card h2{margin:10px 0 6px;font-size:1.15rem;color:var(--navy)}
-  .card p{margin:0 0 16px;color:var(--muted);font-size:.9rem;line-height:1.45}
-  .go{font-weight:700;color:var(--c);font-size:.9rem}
-  .tip{max-width:700px;margin:0 auto 30px;padding:0 16px;color:var(--muted);font-size:.85rem;text-align:center}
-  footer{text-align:center;color:var(--muted);font-size:.8rem;padding:20px 16px}
-  @media (max-width:600px){ .back{position:static;transform:none;display:inline-block;margin-bottom:12px} main{grid-template-columns:1fr} }
-</style>
-</head>
-<body>
-<header>
-  <a class="back" href="./">← Back</a>
-  <h1>Estate</h1>
-  <p>Choose a module</p>
-</header>
-<main id="mods"></main>
-<p class="tip">📱 Using it at the estate with no signal? Open <b>Site Visit</b> once with internet, then add it to your home screen. The portal pages need internet; Site Visit does not.</p>
-<footer>MJSB Portal › Estate</footer>
-<script>
-/* ===== EDIT HERE to add estate modules =====
-   link = where the module is. "estate/lawatan-ladang/" = folder lawatan-ladang inside the repo "estate"
-   soon:true = shows "Coming soon" and cannot be clicked */
-const MODULES = [
-  { icon:'📷', name:'Site Visit', desc:'Lawatan ladang photo report. Works offline, prints 1/2/4 photos per A4, syncs to Google Drive.', link:'estate/lawatan-ladang/', color:'#1f6f43' },
-];
-document.getElementById('mods').innerHTML = MODULES.map(m => m.soon
-  ? `<div class="card soon" style="--c:${m.color}"><div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Coming soon</span></div>`
-  : `<a class="card" href="${m.link}" style="--c:${m.color}">
-     <div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Open →</span>
-   </a>`).join('');
-</script>
-</body>
-</html>
+/**
+ * Site Visit (Lawatan Ladang) — sync to Google Drive
+ * Paste this code at https://script.google.com (New project), then Deploy as a Web App.
+ */
+
+// 1) CHANGE this secret word. Type the same word in the app: Settings → Google Drive.
+const SECRET = 'CHANGE_THIS_SECRET';
+
+// 2) Name of the main folder in Google Drive
+const ROOT_NAME = 'Site Visit';
+
+function doPost(e) {
+  try {
+    const d = JSON.parse(e.postData.contents);
+    if (d.key !== SECRET) return out({ ok: false, error: 'Wrong secret word' });
+    if (d.action === 'ping') return out({ ok: true });
+    if (d.action === 'trash') {   // photo folder attached to a visit or deleted in the app
+      const props = PropertiesService.getScriptProperties(), fid = props.getProperty('v_' + d.visitId);
+      if (fid) { try { DriveApp.getFolderById(fid).setTrashed(true); } catch (e) {} props.deleteProperty('v_' + d.visitId); }
+      return out({ ok: true });
+    }
+
+    const folder = visitFolder(d.visitId, d.folderName);
+
+    if (d.action === 'file') {
+      const old = folder.getFilesByName(d.name);
+      while (old.hasNext()) old.next().setTrashed(true);
+      folder.createFile(Utilities.newBlob(Utilities.base64Decode(d.data), d.mime, d.name));
+    } else if (d.action === 'cleanup') {
+      // remove photo files that were deleted in the app
+      const keep = {};
+      d.keep.forEach(n => keep[n] = true);
+      const it = folder.getFiles();
+      while (it.hasNext()) { const f = it.next(); if (!keep[f.getName()]) f.setTrashed(true); }
+    }
+    return out({ ok: true, folderUrl: folder.getUrl() });
+  } catch (err) {
+    return out({ ok: false, error: String(err) });
+  }
+}
+
+function doGet() {
+  return out({ ok: true, info: 'Site Visit sync is running' });
+}
+
+function visitFolder(id, name) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const fid = props.getProperty('v_' + id);
+    if (fid) {
+      try {
+        const f = DriveApp.getFolderById(fid);
+        if (!f.isTrashed()) { if (f.getName() !== name) f.setName(name); return f; }
+      } catch (e) { /* folder was deleted — make a new one */ }
+    }
+    const f = rootFolder().createFolder(name);
+    props.setProperty('v_' + id, f.getId());
+    return f;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function rootFolder() {
+  const it = DriveApp.getFoldersByName(ROOT_NAME);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(ROOT_NAME);
+}
+
+function out(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
