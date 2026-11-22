@@ -28,7 +28,7 @@
 </head>
 <body>
 <header>
-  <a class="back" href="../">← Back</a>
+  <a class="back" href="./">← Back</a>
   <h1>Estate</h1>
   <p>Choose a module</p>
 </header>
@@ -37,10 +37,10 @@
 <footer>MJSB Portal › Estate</footer>
 <script>
 /* ===== EDIT HERE to add estate modules =====
-   link = where the module is. "../lawatan-ladang/" = the GitHub repo named "lawatan-ladang"
+   link = where the module is. "estate/lawatan-ladang/" = folder lawatan-ladang inside the repo "estate"
    soon:true = shows "Coming soon" and cannot be clicked */
 const MODULES = [
-  { icon:'📷', name:'Site Visit', desc:'Lawatan ladang photo report. Works offline, prints 1/2/4 photos per A4, syncs to Google Drive.', link:'../lawatan-ladang/', color:'#1f6f43' },
+  { icon:'📷', name:'Site Visit', desc:'Lawatan ladang photo report. Works offline, prints 1/2/4 photos per A4, syncs to Google Drive.', link:'estate/lawatan-ladang/', color:'#1f6f43' },
 ];
 document.getElementById('mods').innerHTML = MODULES.map(m => m.soon
   ? `<div class="card soon" style="--c:${m.color}"><div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Coming soon</span></div>`
