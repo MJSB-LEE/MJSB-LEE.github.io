@@ -37,7 +37,7 @@ const MODULES = [
   { icon:'📊', name:'PO & GRN Audit', desc:'AutoCount PO vs GRN summary, PO outstanding, GRN listing and price check.', link:'po/',  color:'#0284c7' },
   { icon:'🌴', name:'FFB',            desc:'FFB records and Site Clerk entry.',                                       link:'RALLFALL-FFB/', color:'#15803d' },
   { icon:'📦', name:'Store',          desc:'Papan: bill send up to estate, status and photos.',                       link:'store/', color:'#b45309' },
-  { icon:'🚜', name:'Estate',         desc:'Site visit: photo report, works offline and syncs to Google Drive.',      link:'estate/', color:'#1f6f43' },
+  { icon:'🚜', name:'Estate',         desc:'Site visit: photo report, works offline and syncs to Google Drive.',      link:'estate.html', color:'#1f6f43' },
 ];
 document.getElementById('mods').innerHTML = MODULES.map(m => m.soon
   ? `<div class="card soon" style="--c:${m.color}"><div class="icon">${m.icon}</div><h2>${m.name}</h2><p>${m.desc}</p><span class="go">Coming soon</span></div>`
